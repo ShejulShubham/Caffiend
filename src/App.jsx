@@ -1,3 +1,4 @@
+import { ToastContainer } from 'react-fox-toast';
 import CoffeeForm from './components/CoffeeForm';
 import Hero from './components/Hero';
 import Layout from './components/layout';
@@ -16,6 +17,7 @@ function App() {
 
   return (
     <Layout >
+      <ToastContainer/>
       <Hero />
       <CoffeeForm />
       {isAuthenticated && (authenticatedContent)}
