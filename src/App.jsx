@@ -1,13 +1,13 @@
 import { ToastContainer } from 'react-fox-toast';
 import CoffeeForm from './components/CoffeeForm';
 import Hero from './components/Hero';
-import Layout from './components/layout';
+import Layout from './components/Layout';
 import Stats from './components/Stats';
 import History from './components/History';
 
 function App() {
 
-  const isAuthenticated = true;
+  const isAuthenticated = false;
 
   const authenticatedContent = (
     <>
@@ -18,9 +18,9 @@ function App() {
 
   return (
     <Layout >
-      <ToastContainer/>
+      <ToastContainer />
       <Hero />
-      <CoffeeForm />
+      <CoffeeForm isAuthenticated={isAuthenticated} />
       {isAuthenticated && (authenticatedContent)}
     </Layout>
   )
