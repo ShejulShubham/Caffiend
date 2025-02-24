@@ -2,33 +2,80 @@ import { coffeeOptions } from "../utils"
 import { useState } from "react"
 import Authentication from "./Authentication";
 import Modal from "./Modal";
+import { useAuth } from "../context/AuthContext";
+import { db } from "../../firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 
 export default function CoffeeForm(props) {
     const { isAuthenticated } = props;
-    const [showModal, setShowModal] = useState(true);
+    const [showModal, setShowModal] = useState(false);
     const [selectedCoffee, setSelectedCoffee] = useState(null);
     const [showCoffeeTypes, setShowCoffeeTypes] = useState(false);
     const [coffeeCost, setCoffeeCost] = useState(0);
     const [hour, setHour] = useState(0);
-    const [mins, setMins] = useState(0);
+    const [min, setMin] = useState(0);
+
+    const { globalData, setGlobalData, globalUser } = useAuth();
 
 
-
-
-    function handleSubmitForm() {
+    async function handleSubmitForm() {
         if (!isAuthenticated) {
             setShowModal(true)
             return
         }
-        console.log(selectedCoffee, hour, mins);
+
+        // define a guard clause that only submits the form if 
+        // it is completed
+        if (!selectedCoffee) {
+            return
+        }
+
+        try {
+            // then we're going to create a new data object
+            const newGlobalData = {
+                ...(globalData || {})
+            }
+
+            const nowTime = Date.now();
+            const timeToSubtract = (hour * 60 * 60 * 1000) + (min * 60 * 1000)
+            const timestamp = nowTime - timeToSubtract
+
+            const newData = {
+                name: selectedCoffee,
+                cost: coffeeCost
+            }
+            newGlobalData[timestamp] = newData
+            console.log(timestamp, selectedCoffee, coffeeCost)
+
+            // update the global state
+            setGlobalData(newGlobalData);
+
+            // persist the data in the firebase firestore
+            const userRef = doc(db, 'users', globalUser.uid)
+            const res = await setDoc(userRef, {
+                [timestamp]: newData
+            }, { merge: true })
+            console.log(selectedCoffee, hour, min);
+
+            setSelectedCoffee(null)
+            setHour(0)
+            setMin(0)
+            setCoffeeCost(0)
+        } catch (error) {
+            console.log(error.message)
+        }
+    }
+
+    function handleCloseModal() {
+        setShowModal(false)
     }
 
     return (
         <>
             {showModal && (
-                <Modal handleCloseModal={() => { setShowModal(false) }}>
-                    <Authentication />
+                <Modal handleCloseModal={handleCloseModal}>
+                    <Authentication handleCloseModal={handleCloseModal} />
                 </Modal>
             )}
             <div className="section-header">
@@ -69,7 +116,7 @@ export default function CoffeeForm(props) {
                 })}
             </select>)}
             <h4>Add the cost</h4>
-            <input className="w-full" type="number" value={coffeeCost} placeholder="4.50"
+            <input id="cost" className="w-full" type="number" value={coffeeCost} placeholder="4.50"
                 onChange={(e) => { setCoffeeCost(e.target.value) }} />
             <h4>Time since consumption</h4>
             <div className="time-entry">
@@ -86,9 +133,9 @@ export default function CoffeeForm(props) {
                     </select>
                 </div>
                 <div>
-                    <h6>Mins</h6>
+                    <h6>Min</h6>
                     <select onChange={(e) => {
-                        setMins(e.target.value)
+                        setMin(e.target.value)
                     }} id="mins-select">
                         {[0, 5, 10, 15, 30, 45].map((min, minIndex) => {
                             return (
