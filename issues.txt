@@ -1,3 +1,4 @@
 1. try solving sign in error message function
 2. set entry added notification also signin, signout, etc.
-3. 
+3. add reset password functionality
+4. 
